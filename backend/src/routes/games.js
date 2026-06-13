@@ -25,14 +25,14 @@ router.get('/:id', (req, res) => {
  * Body: { nombre, galaxiaArchivo, maxJugadores, tiempoMaximo, nivelRecursos }
  */
 router.post('/', async (req, res) => {
-  const { nombre, galaxiaArchivo, maxJugadores, tiempoMaximo, nivelRecursos } = req.body;
+  const { nombre, galaxiaArchivo, maxJugadores, minJugadores, tiempoMaximo, nivelRecursos, host } = req.body;
 
   if (!nombre || !galaxiaArchivo || !maxJugadores || !tiempoMaximo || !nivelRecursos) {
     return res.status(400).json({ error: 'Faltan campos requeridos' });
   }
 
   try {
-    const partida = gameManager.crearPartida({ nombre, galaxiaArchivo, maxJugadores, tiempoMaximo, nivelRecursos });
+    const partida = gameManager.crearPartida({ nombre, galaxiaArchivo, maxJugadores, minJugadores, tiempoMaximo, nivelRecursos, host });
 
     // Persistir en BD
     await db.query(

@@ -18,6 +18,7 @@ function cargarGalaxia(archivoPath) {
       id: s.id,
       nombre: s.nombre,
       tipo: s.tipo,
+      descripcion: s.descripcion || '', // Si no hay descripción, usar cadena vacía
       propietario: null,          // null = libre
       estado: 'no_explorado',     // no_explorado | controlado
       flotas: 0,

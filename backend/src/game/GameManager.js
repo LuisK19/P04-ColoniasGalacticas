@@ -19,10 +19,10 @@ class GameManager {
 
   /**
    * Crea una nueva partida y la registra en memoria.
-   * @param {Object} opciones - nombre, galaxiaArchivo, maxJugadores, tiempoMaximo, nivelRecursos
+   * @param {Object} opciones - nombre, galaxiaArchivo, maxJugadores, minJugadores, tiempoMaximo, nivelRecursos, host
    * @returns {Object} - La partida creada
    */
-  crearPartida({ nombre, galaxiaArchivo, maxJugadores, tiempoMaximo, nivelRecursos }) {
+  crearPartida({ nombre, galaxiaArchivo, maxJugadores, minJugadores, tiempoMaximo, nivelRecursos, host }) {
     const id = uuidv4();
     const rutaGalaxia = path.join(__dirname, '../../galaxias', galaxiaArchivo);
     const galaxia = cargarGalaxia(rutaGalaxia);
@@ -33,8 +33,10 @@ class GameManager {
       galaxiaArchivo,
       galaxiaNombre: galaxia.nombre,
       maxJugadores: parseInt(maxJugadores),
+      minJugadores: parseInt(minJugadores) || 2,
       tiempoMaximo: parseInt(tiempoMaximo),   // minutos
       nivelRecursos,
+      host: host || null, 
       estado: 'esperando',                    // esperando | activa | finalizada
       jugadores: {},                          // { [nickname]: DatosJugador }
       sistemas: galaxia.sistemas,             // estado actual del mapa
@@ -128,8 +130,8 @@ class GameManager {
       return { ok: false, error: 'La partida ya fue iniciada' };
 
     const jugadores = Object.keys(partida.jugadores);
-    if (jugadores.length < 2)
-      return { ok: false, error: 'Se necesitan al menos 2 jugadores' };
+    if (jugadores.length < partida.minJugadores)
+      return { ok: false, error: `Se necesitan al menos ${partida.minJugadores} jugadores` };
 
     // Asignar planeta base aleatorio a cada jugador
     const sistemasDisponibles = Object.keys(partida.sistemas);
@@ -441,6 +443,8 @@ class GameManager {
       galaxiaNombre: partida.galaxiaNombre,
       galaxiaArchivo: partida.galaxiaArchivo,
       maxJugadores: partida.maxJugadores,
+      minJugadores: partida.minJugadores,
+      host: partida.host,
       tiempoMaximo: partida.tiempoMaximo,
       nivelRecursos: partida.nivelRecursos,
       estado: partida.estado,
@@ -459,7 +463,9 @@ class GameManager {
       sistemas: partida.sistemas,
       adyacencia: partida.adyacencia,
       jugadores: partida.jugadores,
-      galaxiaNombre: partida.galaxiaNombre
+      galaxiaNombre: partida.galaxiaNombre,
+      minJugadores: partida.minJugadores,
+      host: partida.host
     };
   }
 }
