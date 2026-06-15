@@ -5,6 +5,7 @@ import Results from './pages/Results/Results';
 import CrearPartida from './pages/CrearPartida/CrearPartida';
 import Partidas from './pages/Partidas/Partidas';
 import Lobby from './pages/Lobby/Lobby';
+import Ranking from './pages/Ranking/Ranking';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/lobby/:gameId" element={<Lobby />} />
         <Route path="/game/:gameId" element={<Game />} />
         <Route path="/results/:gameId" element={<Results />} />
+        <Route path="/ranking" element={<Ranking />} />
       </Routes>
     </BrowserRouter>
   );

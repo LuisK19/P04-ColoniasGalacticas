@@ -14,9 +14,9 @@ const BACKEND = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
 function Home() {
   const navigate = useNavigate();
 
-  const [nickname, setNickname]     = useState('');
-  const [error, setError]           = useState('');
-  const [cargando, setCargando]     = useState(false);
+  const [nickname, setNickname] = useState(localStorage.getItem('nickname') || '');
+  const [error, setError] = useState('');
+  const [cargando, setCargando] = useState(false);
 
   /*
    * Valida el nickname y lo guarda en sessionStorage.
@@ -37,11 +37,11 @@ function Home() {
 
     try {
       const res = await axios.post(`${BACKEND}/auth`, { nickname: nickname.trim() });
-      sessionStorage.setItem('nickname', res.data.nickname);
-      sessionStorage.setItem('token', res.data.token);
+      localStorage.setItem('nickname', res.data.nickname);
+      localStorage.setItem('token', res.data.token);
 
-      if (accion === 'crear')   navigate('/crear');
-      if (accion === 'unirse')  navigate('/partidas');
+      if (accion === 'crear') navigate('/crear');
+      if (accion === 'unirse') navigate('/partidas');
       if (accion === 'ranking') navigate('/ranking');
     } catch (err) {
       setError('Error al conectar con el servidor');
