@@ -1,18 +1,28 @@
 const { Pool } = require('pg');
-const config = require('../config/config');
+require('dotenv').config();
+
+const modo = process.env.DB_MODE || 'local';
+console.log(`Modo de BD: ${modo.toUpperCase()}`);
+
+const connectionString =
+  modo === 'remota'
+    ? process.env.DATABASE_URL_REMOTA
+    : process.env.DATABASE_URL_LOCAL;
 
 const pool = new Pool({
-  connectionString: config.databaseUrl,
-  ssl: { rejectUnauthorized: false }
+  connectionString,
+  ssl: modo === 'remota' ? { rejectUnauthorized: false } : false
 });
 
 pool.connect((err, client, release) => {
   if (err) {
     console.error('Error conectando a la BD:', err.message);
   } else {
-    console.log('Conectado a PostgreSQL correctamente');
+    console.log(`Conectado a PostgreSQL (${modo})`);
     release();
   }
 });
 
-module.exports = pool;
+module.exports = {
+  query: (text, params) => pool.query(text, params)
+};
