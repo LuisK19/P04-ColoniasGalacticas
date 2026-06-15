@@ -90,6 +90,41 @@ class GameManager {
     return { ok: true, partida: this._partidaPublica(partida) };
   }
 
+  /*
+ * Remueve un jugador de una partida en estado esperando.
+ * Entrada: partidaId - id de la partida
+ * Entrada: nickname - jugador que sale
+ * Salida: { ok, error }
+ */
+salirPartida(partidaId, nickname) {
+  const partida = this.partidas[partidaId];
+
+  if (!partida)
+    return { ok: false, error: 'Partida no encontrada' };
+  if (partida.estado !== 'esperando')
+    return { ok: false, error: 'No se puede salir de una partida en curso' };
+  if (!partida.jugadores[nickname])
+    return { ok: false, error: 'El jugador no está en esta partida' };
+
+  delete partida.jugadores[nickname];
+  console.log(`${nickname} salió de la partida ${partida.nombre}`);
+
+  // Si era el host y quedan jugadores, asignar nuevo host
+  if (partida.host === nickname) {
+    const restantes = Object.keys(partida.jugadores);
+    partida.host = restantes.length > 0 ? restantes[0] : null;
+    console.log(`Nuevo host: ${partida.host}`);
+  }
+
+  // Si no quedan jugadores, cerrar la partida
+  if (Object.keys(partida.jugadores).length === 0) {
+    delete this.partidas[partidaId];
+    console.log(`Partida ${partidaId} cerrada por falta de jugadores`);
+  }
+
+  return { ok: true };
+}
+
   // =============================================
   // LISTAR PARTIDAS
   // =============================================
