@@ -72,4 +72,19 @@ router.post('/:id/join', async (req, res) => {
   res.json({ partida: resultado.partida });
 });
 
+/*
+ * POST /games/:id/leave — salir de una partida
+ * Body: { nickname }
+ * Remueve al jugador de la partida si está en estado esperando
+ */
+router.post('/:id/leave', async (req, res) => {
+  const { nickname } = req.body;
+  if (!nickname) return res.status(400).json({ error: 'Nickname requerido' });
+
+  const resultado = gameManager.salirPartida(req.params.id, nickname);
+  if (!resultado.ok) return res.status(400).json({ error: resultado.error });
+
+  res.json({ ok: true });
+});
+
 module.exports = router;
