@@ -1,0 +1,168 @@
+.container {
+  width: 100%;
+  min-height: 100svh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  background-color: var(--bg);
+  padding: 2rem 1rem;
+}
+
+.panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  width: 100%;
+  max-width: 64rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  box-shadow: var(--shadow);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.trofeo {
+  color: var(--accent);
+}
+
+.oro    { color: #f0c040; }
+.plata  { color: #94a3b8; }
+.bronce { color: #b45309; }
+
+.titulo {
+  font-size: 1.75rem;
+  color: var(--text-heading);
+}
+
+.ganador {
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+
+.ganador span {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.infoPartida {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.infoItem {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.tabla {
+  overflow-x: auto;
+}
+
+.tablaHeader {
+  display: grid;
+  grid-template-columns: 2rem 8rem 6rem repeat(8, 1fr);
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05rem;
+  margin-bottom: 0.375rem;
+  min-width: 50rem;
+}
+
+.fila {
+  display: grid;
+  grid-template-columns: 2rem 8rem 6rem repeat(8, 1fr);
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  color: var(--text);
+  margin-bottom: 0.375rem;
+  transition: border-color 0.2s;
+  min-width: 50rem;
+}
+
+.fila:hover {
+  border-color: var(--border-hover);
+}
+
+.filaPrimera {
+  border-color: var(--accent);
+  background: rgba(240, 192, 64, 0.05);
+}
+
+.filaEliminado {
+  opacity: 0.5;
+}
+
+.posicion {
+  font-size: 1rem;
+}
+
+.nombre {
+  font-weight: 600;
+  color: var(--text-heading);
+}
+
+.puntaje {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.acciones {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btnRanking {
+  padding: 0.75rem 1.5rem;
+  border: 1px solid var(--primary);
+  border-radius: var(--radius);
+  background: rgba(29, 111, 164, 0.08);
+  color: var(--primary);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.btnRanking:hover {
+  background: rgba(29, 111, 164, 0.18);
+}
+
+.btnInicio {
+  padding: 0.75rem 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.btnInicio:hover {
+  border-color: var(--border-hover);
+  color: var(--text);
+}
