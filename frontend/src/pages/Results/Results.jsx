@@ -2,75 +2,46 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Trophy, Globe, Clock, Users, Medal } from 'lucide-react';
 import styles from './Results.module.css';
 
+/*
+ * Pantalla de resultados al finalizar una partida.
+ * Lee el resultado guardado en localStorage por Game.jsx cuando
+ * llega el evento game:end del WebSocket.
+ */
 function Results() {
   const navigate   = useNavigate();
   const { gameId } = useParams();
 
-  const resultados = {
-    tiempoJuego:  '12:34',
-    galaxia:      'Nebulosa Orion',
-    partidaId:    gameId || 'demo-123',
-    jugadores: [
-      {
-        posicion:            1,
-        nickname:            'Luis',
-        puntaje:             42500,
-        sistemasControlados: 8,
-        minerales:           1200,
-        energia:             800,
-        cristales:           300,
-        flotas:              15,
-        minas:               4,
-        centros:             2,
-        fortalezas:          1,
-        eliminado:           false
-      },
-      {
-        posicion:            2,
-        nickname:            'Rival',
-        puntaje:             28000,
-        sistemasControlados: 5,
-        minerales:           600,
-        energia:             400,
-        cristales:           150,
-        flotas:              8,
-        minas:               2,
-        centros:             1,
-        fortalezas:          0,
-        eliminado:           false
-      },
-      {
-        posicion:            3,
-        nickname:            'Jugador3',
-        puntaje:             5000,
-        sistemasControlados: 1,
-        minerales:           100,
-        energia:             50,
-        cristales:           20,
-        flotas:              0,
-        minas:               0,
-        centros:             0,
-        fortalezas:          0,
-        eliminado:           true
-      }, 
-      {
-        posicion:            4,
-        nickname:            'Jugador4',
-        puntaje:             3000,
-        sistemasControlados: 0,
-        minerales:           50,
-        energia:             20,
-        cristales:           10,
-        flotas:              0,
-        minas:               0,
-        centros:             0,
-        fortalezas:          0,
-        eliminado:           true
-      }
-    ]
+  const dataGuardada = localStorage.getItem('resultadoPartida');
+  const resultadoCrudo = dataGuardada ? JSON.parse(dataGuardada) : null;
+
+  if (!resultadoCrudo) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.panel}>
+          <p className={styles.info}>No hay resultados disponibles para esta partida.</p>
+          <div className={styles.acciones}>
+            <button className={styles.btnInicio} onClick={() => navigate('/')}>
+              Volver al Inicio
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const { partida, ranking } = resultadoCrudo;
+
+  const tiempoJuegoSeg = partida.iniciadaEn
+    ? Math.floor((Date.now() - partida.iniciadaEn) / 1000)
+    : 0;
+
+  const formatearTiempo = (segundos) => {
+    const min = Math.floor(segundos / 60);
+    const seg = segundos % 60;
+    return `${min}:${seg.toString().padStart(2, '0')}`;
   };
 
-  const ganador = resultados.jugadores[0];
+  const ganador = ranking[0];
 
   /*
    * Devuelve el icono de medalla según la posición del jugador.
@@ -98,15 +69,15 @@ function Results() {
         <div className={styles.infoPartida}>
           <div className={styles.infoItem}>
             <Globe size={14} />
-            {resultados.galaxia}
+            {partida.galaxiaNombre}
           </div>
           <div className={styles.infoItem}>
             <Clock size={14} />
-            {resultados.tiempoJuego} de juego
+            {formatearTiempo(tiempoJuegoSeg)} de juego
           </div>
           <div className={styles.infoItem}>
             <Users size={14} />
-            {resultados.jugadores.length} jugadores
+            {ranking.length} jugadores
           </div>
         </div>
 
@@ -125,7 +96,7 @@ function Results() {
             <span>Fortalezas</span>
           </div>
 
-          {resultados.jugadores.map(j => (
+          {ranking.map(j => (
             <div
               key={j.nickname}
               className={`${styles.fila} ${j.posicion === 1 ? styles.filaPrimera : ''} ${j.eliminado ? styles.filaEliminado : ''}`}
@@ -139,7 +110,7 @@ function Results() {
               <span>{j.cristales.toLocaleString()}</span>
               <span>{j.flotas}</span>
               <span>{j.minas}</span>
-              <span>{j.centros}</span>
+              <span>{j.centrales}</span>
               <span>{j.fortalezas}</span>
             </div>
           ))}
