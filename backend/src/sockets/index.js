@@ -17,7 +17,7 @@ module.exports = (io) => {
     socket.on('join-lobby', ({ partidaId, nickname }) => {
       socket.join(partidaId);
       socket.data.partidaId = partidaId;
-      socket.data.nickname  = nickname;
+      socket.data.nickname = nickname;
 
       console.log(`${nickname} entró al lobby de ${partidaId}`);
 
@@ -129,6 +129,27 @@ module.exports = (io) => {
           destino: resultado.destino,
           nickname
         });
+      }
+    });
+
+    /*
+    * Un jugador abandona la partida voluntariamente.
+    * Se marca como eliminado, igual que si hubiera perdido todos sus sistemas.
+    * Evento: 'game:leave'
+    * Entrada: { partidaId, nickname }
+    */
+    socket.on('game:leave', ({ partidaId, nickname }) => {
+      const resultado = gameManager.salirDeJuego(partidaId, nickname);
+
+      if (!resultado.ok) {
+        socket.emit('error', { mensaje: resultado.error });
+        return;
+      }
+
+      io.to(partidaId).emit('player:eliminated', { nickname });
+
+      if (resultado.partidaFinalizada) {
+        io.to(partidaId).emit('game:end', resultado.resultadoFinal);
       }
     });
 

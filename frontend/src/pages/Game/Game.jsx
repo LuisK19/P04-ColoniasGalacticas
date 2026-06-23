@@ -176,6 +176,19 @@ function Game() {
   }, []);
 
   /*
+   * Abandona la partida voluntariamente. El jugador se marca como
+   * eliminado en el backend (pierde sus sistemas) y se le regresa al inicio.
+   */
+  const handleSalir = useCallback(() => {
+    const confirmado = window.confirm('¿Seguro que querés abandonar la partida? Perderás todos tus sistemas.');
+    if (!confirmado) return;
+
+    socket.emit('game:leave', { partidaId: gameId, nickname });
+    socket.disconnect();
+    navigate('/');
+  }, [gameId, nickname, navigate]);
+
+  /*
    * Maneja el clic en un sistema del mapa. Si hay una orden de mover
    * flotas pendiente, completa el movimiento hacia el sistema clickeado.
    * Si no, simplemente selecciona el sistema para ver su información.
@@ -216,12 +229,17 @@ function Game() {
 
   return (
     <div className={styles.container}>
-      <ResourceBar
-        minerales={jugadorActual.minerales ?? 0}
-        energia={jugadorActual.energia ?? 0}
-        cristales={jugadorActual.cristales ?? 0}
-        nickname={nickname}
-      />
+      <div className={styles.topBar}>
+        <ResourceBar
+          minerales={jugadorActual.minerales ?? 0}
+          energia={jugadorActual.energia ?? 0}
+          cristales={jugadorActual.cristales ?? 0}
+          nickname={nickname}
+        />
+        <button className={styles.btnSalir} onClick={handleSalir}>
+          Salir
+        </button>
+      </div>
 
       {notificacion && (
         <div className={`${styles.notificacion} ${styles['notificacion' + (notificacion.tipo === 'error' ? 'Error' : 'Exito')]}`}>
