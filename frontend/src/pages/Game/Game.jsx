@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { socket } from '../../socket/socket';
 import GalaxyMap from '../../components/GalaxyMap/GalaxyMap';
@@ -14,20 +14,20 @@ import styles from './Game.module.css';
  */
 function Game() {
   const { gameId } = useParams();
-  const navigate    = useNavigate();
-  const nickname    = localStorage.getItem('nickname') || 'usuario';
+  const navigate = useNavigate();
+  const nickname = localStorage.getItem('nickname') || 'usuario';
 
-  const [estadoJuego, setEstadoJuego]                 = useState(null);
+  const [estadoJuego, setEstadoJuego] = useState(null);
   const [sistemaSeleccionado, setSistemaSeleccionado] = useState(null);
-  const [flotaPendiente, setFlotaPendiente]           = useState(null);
-  const [notificacion, setNotificacion]               = useState(null);
+  const [flotaPendiente, setFlotaPendiente] = useState(null);
+  const [notificacion, setNotificacion] = useState(null);
 
   // Refs para mantener valores actuales accesibles dentro del useEffect
   // de sockets sin que cambien sus dependencias y disparen reconexiones.
   const nicknameRef = useRef(nickname);
-  const navigateRef  = useRef(navigate);
+  const navigateRef = useRef(navigate);
   nicknameRef.current = nickname;
-  navigateRef.current  = navigate;
+  navigateRef.current = navigate;
 
   /*
    * Muestra una notificación temporal en pantalla.
@@ -199,6 +199,11 @@ function Game() {
     handleClickSistema(sistema);
   }, [flotaPendiente, gameId, nickname, handleClickSistema]);
 
+  const adyacenciaEstable = useMemo(
+    () => estadoJuego?.adyacencia,
+    [JSON.stringify(estadoJuego?.adyacencia)]
+  );
+
   if (!estadoJuego) {
     return (
       <div className={styles.container}>
@@ -237,7 +242,7 @@ function Game() {
         <div className={styles.mapa}>
           <GalaxyMap
             sistemas={estadoJuego.sistemas}
-            adyacencia={estadoJuego.adyacencia}
+            adyacencia={adyacenciaEstable}
             onClickSistema={handleClickMapa}
             nickname={nickname}
             origenFlota={flotaPendiente?.origenId || null}

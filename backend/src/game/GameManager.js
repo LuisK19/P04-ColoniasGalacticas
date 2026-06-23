@@ -2,7 +2,6 @@ const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const { cargarGalaxia } = require('./GalaxyLoader');
 const config = require('../config/config');
-const db = require('../db/index');
 
 /**
  * GameManager — administra todas las partidas activas en memoria.
@@ -37,7 +36,7 @@ class GameManager {
       minJugadores: parseInt(minJugadores) || 2,
       tiempoMaximo: parseInt(tiempoMaximo),   // minutos
       nivelRecursos,
-      host: host || null,
+      host: host || null, 
       estado: 'esperando',                    // esperando | activa | finalizada
       jugadores: {},                          // { [nickname]: DatosJugador }
       sistemas: galaxia.sistemas,             // estado actual del mapa
@@ -97,34 +96,34 @@ class GameManager {
  * Entrada: nickname - jugador que sale
  * Salida: { ok, error }
  */
-  salirPartida(partidaId, nickname) {
-    const partida = this.partidas[partidaId];
+salirPartida(partidaId, nickname) {
+  const partida = this.partidas[partidaId];
 
-    if (!partida)
-      return { ok: false, error: 'Partida no encontrada' };
-    if (partida.estado !== 'esperando')
-      return { ok: false, error: 'No se puede salir de una partida en curso' };
-    if (!partida.jugadores[nickname])
-      return { ok: false, error: 'El jugador no está en esta partida' };
+  if (!partida)
+    return { ok: false, error: 'Partida no encontrada' };
+  if (partida.estado !== 'esperando')
+    return { ok: false, error: 'No se puede salir de una partida en curso' };
+  if (!partida.jugadores[nickname])
+    return { ok: false, error: 'El jugador no está en esta partida' };
 
-    delete partida.jugadores[nickname];
-    console.log(`${nickname} salió de la partida ${partida.nombre}`);
+  delete partida.jugadores[nickname];
+  console.log(`${nickname} salió de la partida ${partida.nombre}`);
 
-    // Si era el host y quedan jugadores, asignar nuevo host
-    if (partida.host === nickname) {
-      const restantes = Object.keys(partida.jugadores);
-      partida.host = restantes.length > 0 ? restantes[0] : null;
-      console.log(`Nuevo host: ${partida.host}`);
-    }
-
-    // Si no quedan jugadores, cerrar la partida
-    if (Object.keys(partida.jugadores).length === 0) {
-      delete this.partidas[partidaId];
-      console.log(`Partida ${partidaId} cerrada por falta de jugadores`);
-    }
-
-    return { ok: true };
+  // Si era el host y quedan jugadores, asignar nuevo host
+  if (partida.host === nickname) {
+    const restantes = Object.keys(partida.jugadores);
+    partida.host = restantes.length > 0 ? restantes[0] : null;
+    console.log(`Nuevo host: ${partida.host}`);
   }
+
+  // Si no quedan jugadores, cerrar la partida
+  if (Object.keys(partida.jugadores).length === 0) {
+    delete this.partidas[partidaId];
+    console.log(`Partida ${partidaId} cerrada por falta de jugadores`);
+  }
+
+  return { ok: true };
+}
 
   // =============================================
   // LISTAR PARTIDAS
@@ -218,12 +217,12 @@ class GameManager {
       if (!jugador || jugador.eliminado) continue;
 
       jugador.minerales += sistema.produccion.minerales;
-      jugador.energia += sistema.produccion.energia;
+      jugador.energia   += sistema.produccion.energia;
       jugador.cristales += sistema.produccion.cristales;
 
       // Bonus por centrales de investigación
       jugador.minerales += sistema.instalaciones.centrales * 50;
-      jugador.energia += sistema.instalaciones.centrales * 25;
+      jugador.energia   += sistema.instalaciones.centrales * 25;
       jugador.cristales += sistema.instalaciones.centrales * 10;
     }
   }
@@ -253,14 +252,14 @@ class GameManager {
     if (!costo) return { ok: false, error: 'Tipo de instalación inválido' };
 
     if (jugador.minerales < costo.minerales ||
-      jugador.energia < costo.energia ||
-      jugador.cristales < costo.cristales) {
+        jugador.energia   < costo.energia   ||
+        jugador.cristales < costo.cristales) {
       return { ok: false, error: 'Recursos insuficientes' };
     }
 
     // Descontar recursos
     jugador.minerales -= costo.minerales;
-    jugador.energia -= costo.energia;
+    jugador.energia   -= costo.energia;
     jugador.cristales -= costo.cristales;
 
     // Agregar instalación
@@ -283,7 +282,7 @@ class GameManager {
     const partida = this.partidas[partidaId];
     if (!partida) return { ok: false, error: 'Partida no encontrada' };
 
-    const origen = partida.sistemas[origenId];
+    const origen  = partida.sistemas[origenId];
     const destino = partida.sistemas[destinoId];
 
     if (!origen || !destino) return { ok: false, error: 'Sistema no encontrado' };
@@ -306,13 +305,6 @@ class GameManager {
       return { ok: true, combate: false, origen, destino };
     }
 
-    console.log('--- DEBUG moverFlotas ---');
-    console.log('partidaId:', partidaId);
-    console.log('nickname recibido:', nickname);
-    console.log('origen.propietario:', origen?.propietario);
-    console.log('origen.flotas:', origen?.flotas);
-    console.log('cantidad solicitada:', cantidad);
-
     // Si el destino es de otro jugador → combate
     return this._resolverCombate(partida, nickname, origen, destino, cantidad);
   }
@@ -328,13 +320,13 @@ class GameManager {
   _resolverCombate(partida, invasorNick, origen, destino, flotasInvasoras) {
     const defensorNick = destino.propietario;
 
-    let fuerzaInvasor = flotasInvasoras;
+    let fuerzaInvasor  = flotasInvasoras;
     let fuerzaDefensor = destino.flotas;
 
     // Neutralizar minas (cada flota del invasor elimina hasta 3 minas)
     const minasEliminadas = Math.min(destino.instalaciones.minas, Math.floor(fuerzaInvasor / 1));
     const flotasUsadasEnMinas = Math.ceil(minasEliminadas / 3);
-    fuerzaInvasor -= flotasUsadasEnMinas;
+    fuerzaInvasor  -= flotasUsadasEnMinas;
     destino.instalaciones.minas -= minasEliminadas;
 
     // Neutralizar fortalezas (2 astilleros por fortaleza)
@@ -345,7 +337,7 @@ class GameManager {
 
     // Combate directo flota vs flota
     const bajasMutuas = Math.min(fuerzaInvasor, fuerzaDefensor);
-    fuerzaInvasor -= bajasMutuas;
+    fuerzaInvasor  -= bajasMutuas;
     fuerzaDefensor -= bajasMutuas;
 
     const resultado = {
@@ -417,14 +409,7 @@ class GameManager {
     }
   }
 
-  /**
-   * Finaliza una partida: detiene los timers, calcula el ranking,
-   * guarda los resultados en la base de datos y notifica a los jugadores.
-   * @param {Object} partida - partida a finalizar
-   * @param {string} motivo - tiempo | dominio | ultimo_jugador
-   * @param {Function} onFin - callback que se llama con el resultado final
-   */
-  async _finalizarPartida(partida, motivo, onFin) {
+  _finalizarPartida(partida, motivo, onFin) {
     if (partida.estado === 'finalizada') return;
 
     clearInterval(partida.timerProduccion);
@@ -436,77 +421,25 @@ class GameManager {
     const ranking = this._calcularRanking(partida);
     console.log(`Partida ${partida.nombre} finalizada. Motivo: ${motivo}`);
 
-    await this._guardarResultadosEnBD(partida, ranking);
-
     if (onFin) onFin({ partida: this._estadoJuegoCompleto(partida), ranking, motivo });
-  }
-
-  /**
-   * Guarda en la base de datos las estadísticas finales de cada jugador
-   * y el registro del ganador en la tabla de ranking.
-   * @param {Object} partida - partida finalizada
-   * @param {Array} ranking - resultado calculado por _calcularRanking, ordenado por puntaje
-   */
-  async _guardarResultadosEnBD(partida, ranking) {
-    try {
-      await db.query(
-        `UPDATE partidas SET estado = $1, finalizada_en = NOW() WHERE id = $2`,
-        ['finalizada', partida.id]
-      );
-
-      for (const j of ranking) {
-        await db.query(
-          `UPDATE jugadores_partida
-           SET posicion = $1, puntaje_final = $2, sistemas_finales = $3,
-               flotas_final = $4, minas_finales = $5, centros_finales = $6,
-               fortalezas_finales = $7, minerales_finales = $8,
-               energia_final = $9, cristales_finales = $10
-           WHERE partida_id = $11 AND nickname = $12`,
-          [
-            j.posicion, j.puntaje, j.sistemasControlados,
-            j.flotas, j.minas, j.centrales,
-            j.fortalezas, j.minerales,
-            j.energia, j.cristales,
-            partida.id, j.nickname
-          ]
-        );
-      }
-
-      const ganador = ranking[0];
-      const tiempoJuegoSeg = Math.floor((partida.finalizadaEn - partida.iniciadaEn) / 1000);
-
-      await db.query(
-        `INSERT INTO ranking (partida_id, ganador_nickname, sistemas_controlados, minerales, energia, cristales, galaxia, tiempo_juego_seg)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-        [
-          partida.id, ganador.nickname, ganador.sistemasControlados,
-          ganador.minerales, ganador.energia, ganador.cristales,
-          partida.galaxiaNombre, tiempoJuegoSeg
-        ]
-      );
-
-      console.log(`Estadísticas de la partida ${partida.id} guardadas en BD`);
-    } catch (error) {
-      console.error('Error guardando resultados en BD:', error.message);
-    }
   }
 
   _calcularRanking(partida) {
     return Object.values(partida.jugadores)
       .map(j => {
         const sistemas = Object.values(partida.sistemas).filter(s => s.propietario === j.nickname);
-        const minas = sistemas.reduce((sum, s) => sum + s.instalaciones.minas, 0);
-        const centrales = sistemas.reduce((sum, s) => sum + s.instalaciones.centrales, 0);
+        const minas      = sistemas.reduce((sum, s) => sum + s.instalaciones.minas, 0);
+        const centrales  = sistemas.reduce((sum, s) => sum + s.instalaciones.centrales, 0);
         const astilleros = sistemas.reduce((sum, s) => sum + s.instalaciones.astilleros, 0);
         const fortalezas = sistemas.reduce((sum, s) => sum + s.instalaciones.fortalezas, 0);
 
         const puntaje =
-          sistemas.length * 5000 +
-          j.minerales * 1 +
-          j.energia * 2 +
-          j.cristales * 3 +
-          fortalezas * 100 +
-          centrales * 150;
+          sistemas.length   * 5000 +
+          j.minerales        * 1    +
+          j.energia          * 2    +
+          j.cristales        * 3    +
+          fortalezas         * 100  +
+          centrales          * 150;
 
         return {
           nickname: j.nickname,

@@ -19,7 +19,7 @@ function Home() {
   const [cargando, setCargando] = useState(false);
 
   /*
-   * Valida el nickname y lo guarda en localStorage.
+   * Valida el nickname y lo guarda en sessionStorage.
    * Entrada: accion - string que indica a dónde navegar después
    */
   const handleAccion = async (accion) => {

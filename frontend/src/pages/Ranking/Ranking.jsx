@@ -1,30 +1,50 @@
-import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Trophy, Globe, Clock, ChevronLeft, Medal } from 'lucide-react';
-import axios from 'axios';
 import styles from './Ranking.module.css';
-
-const BACKEND = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
 
 /*
  * Pantalla de ranking histórico de partidas.
- * Muestra los ganadores de cada partida ordenados por fecha descendente.
- * Los datos se obtienen del endpoint GET /ranking, respaldado por la tabla
- * ranking en la base de datos.
+ * Muestra los ganadores de cada partida ordenados por fecha.
+ * Entrada: ninguna — los datos se cargan desde la BD al conectar la API.
  */
 function Ranking() {
   const navigate = useNavigate();
 
-  const [ranking, setRanking]   = useState([]);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError]       = useState('');
-
-  useEffect(() => {
-    axios.get(`${BACKEND}/ranking`)
-      .then(res => setRanking(res.data.ranking))
-      .catch(() => setError('No se pudo cargar el ranking'))
-      .finally(() => setCargando(false));
-  }, []);
+  const ranking = [
+    {
+      id:                  'abc-123',
+      ganadorNickname:     'Luis',
+      sistemasControlados: 18,
+      minerales:           2400,
+      energia:             1800,
+      cristales:           600,
+      galaxia:             'Nebulosa Orion',
+      tiempoJuego:         '23:15',
+      fechaPartida:        '2026-06-14'
+    },
+    {
+      id:                  'def-456',
+      ganadorNickname:     'Rival',
+      sistemasControlados: 15,
+      minerales:           1800,
+      energia:             900,
+      cristales:           300,
+      galaxia:             'Nebulosa Orion',
+      tiempoJuego:         '18:42',
+      fechaPartida:        '2026-06-13'
+    },
+    {
+      id:                  'ghi-789',
+      ganadorNickname:     'Jugador3',
+      sistemasControlados: 20,
+      minerales:           3000,
+      energia:             2200,
+      cristales:           800,
+      galaxia:             'Nebulosa Orion',
+      tiempoJuego:         '30:00',
+      fechaPartida:        '2026-06-12'
+    }
+  ];
 
   return (
     <div className={styles.container}>
@@ -41,11 +61,7 @@ function Ranking() {
           </div>
         </div>
 
-        {error && <p className={styles.error}>{error}</p>}
-
-        {cargando ? (
-          <p className={styles.info}>Cargando ranking...</p>
-        ) : ranking.length === 0 ? (
+        {ranking.length === 0 ? (
           <div className={styles.vacio}>
             <p>No hay partidas registradas todavía.</p>
           </div>
@@ -75,7 +91,7 @@ function Ranking() {
                       {entrada.tiempoJuego}
                     </span>
                     <span className={styles.detalle}>
-                      {new Date(entrada.fechaPartida).toLocaleDateString()}
+                      {entrada.fechaPartida}
                     </span>
                   </div>
                 </div>
@@ -100,7 +116,7 @@ function Ranking() {
                 </div>
 
                 <div className={styles.cardId}>
-                  ID: {entrada.id.slice(0, 8)}...
+                  ID: {entrada.id}
                 </div>
 
               </div>

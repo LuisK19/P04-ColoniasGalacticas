@@ -6,9 +6,13 @@ import styles from './CrearPartida.module.css';
 
 const BACKEND = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
 
+/*
+ * Pantalla para configurar y crear una nueva partida.
+ * El jugador define nombre, galaxia, jugadores, tiempo y recursos iniciales.
+ */
 function CrearPartida() {
     const navigate = useNavigate();
-    const nickname = localStorage.getItem('nickname');
+    const nickname = sessionStorage.getItem('nickname');
 
     const [galaxias, setGalaxias] = useState([]);
     const [cargando, setCargando] = useState(false);
@@ -23,10 +27,12 @@ function CrearPartida() {
         nivelRecursos: 'normal'
     });
 
+    // Si no hay nickname redirigir al inicio
     useEffect(() => {
         if (!nickname) navigate('/');
     }, []);
 
+    // Cargar lista de galaxias disponibles al montar
     useEffect(() => {
         axios.get(`${BACKEND}/galaxies`)
             .then(res => {
@@ -38,11 +44,19 @@ function CrearPartida() {
             .catch(() => setError('No se pudieron cargar las galaxias'));
     }, []);
 
+    /*
+     * Actualiza el estado del formulario cuando cambia un campo.
+     * Entrada: e - evento del input/select
+     */
     const handleChange = (e) => {
         const { name, value } = e.target;
         setForm(f => ({ ...f, [name]: value }));
     };
 
+    /*
+     * Envía el formulario al backend para crear la partida.
+     * Si tiene éxito navega al lobby de esa partida.
+     */
     const handleCrear = async () => {
         if (!form.nombre.trim()) {
             setError('El nombre de la partida es requerido');
@@ -73,6 +87,7 @@ function CrearPartida() {
 
             const partidaId = res.data.partida.id;
 
+            // Unirse automáticamente como host
             await axios.post(`${BACKEND}/games/${partidaId}/join`, { nickname });
 
             navigate(`/lobby/${partidaId}`);
