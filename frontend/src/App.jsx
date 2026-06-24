@@ -7,6 +7,12 @@ import Partidas from './pages/Partidas/Partidas';
 import Lobby from './pages/Lobby/Lobby';
 import Ranking from './pages/Ranking/Ranking';
 
+/*
+ * Componente raiz de la aplicacion.
+ * Define todas las rutas de navegacion entre las pantallas del juego:
+ * inicio, creacion y listado de partidas, lobby, partida en curso,
+ * resultados finales y ranking historico.
+ */
 function App() {
   return (
     <BrowserRouter>
