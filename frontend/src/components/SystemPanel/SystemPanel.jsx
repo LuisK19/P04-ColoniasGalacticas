@@ -1,21 +1,39 @@
+import { useState, useRef } from 'react';
 import { X, Rocket, Shield, Zap, Mountain, FlaskConical } from 'lucide-react';
 import styles from './SystemPanel.module.css';
 
 /*
- * Panel lateral que muestra información de un sistema planetario.
- * Aparece al hacer clic en un nodo del mapa galáctico.
+ * Definicion de instalaciones disponibles para construir.
+ * Cada entrada tiene el tipo, etiqueta, costo legible e icono.
+ */
+const INSTALACIONES = [
+  { tipo: 'mina',      label: 'Mina',      costo: '100 min',        costoDetalle: { minerales: 100, energia: 0,   cristales: 0   }, icono: <Mountain size={13} /> },
+  { tipo: 'central',   label: 'Central',   costo: '80m+50e+200c',   costoDetalle: { minerales: 80,  energia: 50,  cristales: 200 }, icono: <FlaskConical size={13} /> },
+  { tipo: 'astillero', label: 'Astillero', costo: '150m+100e+10c',  costoDetalle: { minerales: 150, energia: 100, cristales: 10  }, icono: <Rocket size={13} /> },
+  { tipo: 'fortaleza', label: 'Fortaleza', costo: '200m+100e+30c',  costoDetalle: { minerales: 200, energia: 100, cristales: 30  }, icono: <Shield size={13} /> },
+];
+
+/*
+ * Panel lateral que muestra informacion de un sistema planetario.
+ * Incluye confirmacion antes de construir instalaciones o mover flotas.
  * Entrada: sistema - objeto con datos del sistema seleccionado
- * Entrada: onCerrar - función para cerrar el panel
+ * Entrada: onCerrar - funcion para cerrar el panel
  * Entrada: nickname - nickname del jugador actual
- * Entrada: onConstruir - función para construir una instalación
- * Entrada: onMoverFlotas - función para mover flotas
+ * Entrada: onConstruir - funcion para construir una instalacion
+ * Entrada: onMoverFlotas - funcion para iniciar el movimiento de flotas
  */
 function SystemPanel({ sistema, onCerrar, nickname, onConstruir, onMoverFlotas }) {
+  // Confirmacion pendiente: { tipo: 'construccion'|'flota', datos: {...} }
+  const [confirmacion, setConfirmacion] = useState(null);
+
+  // Ref del input de cantidad de flotas para leer su valor al confirmar
+  const inputFlotasRef = useRef(null);
+
   if (!sistema) return null;
 
-  const esPropio    = sistema.propietario === nickname;
-  const esLibre     = !sistema.propietario;
-  const esEnemigo   = !esPropio && !esLibre;
+  const esPropio  = sistema.propietario === nickname;
+  const esLibre   = !sistema.propietario;
+  const esEnemigo = !esPropio && !esLibre;
 
   const iconoTipo = {
     minero:     <Mountain size={14} />,
@@ -27,6 +45,43 @@ function SystemPanel({ sistema, onCerrar, nickname, onConstruir, onMoverFlotas }
   const colorEstado = esPropio ? styles.estadoPropio :
                       esLibre  ? styles.estadoLibre  :
                                  styles.estadoEnemigo;
+
+  /*
+   * Abre el modal de confirmacion para construir una instalacion.
+   * Entrada: instalacion - objeto de INSTALACIONES con tipo, label, costo e icono
+   */
+  const pedirConfirmacionConstruir = (instalacion) => {
+    setConfirmacion({
+      tipo: 'construccion',
+      titulo: `Construir ${instalacion.label}`,
+      descripcion: `Confirmas la construccion de un/a ${instalacion.label} en ${sistema.nombre}?`,
+      detalleCosto: instalacion.costoDetalle,
+      onConfirmar: () => {
+        onConstruir && onConstruir(sistema.id, instalacion.tipo);
+        setConfirmacion(null);
+      }
+    });
+  };
+
+  /*
+   * Abre el modal de confirmacion para mover flotas.
+   * Lee la cantidad del input y valida que sea mayor a cero.
+   */
+  const pedirConfirmacionMover = () => {
+    const cantidad = parseInt(inputFlotasRef.current?.value || '1');
+    if (!cantidad || cantidad <= 0) return;
+
+    setConfirmacion({
+      tipo: 'flota',
+      titulo: 'Mover flotas',
+      descripcion: `Confirmas el envio de ${cantidad} flotas desde ${sistema.nombre}? Luego selecciona el sistema destino en el mapa.`,
+      cantidad,
+      onConfirmar: () => {
+        onMoverFlotas && onMoverFlotas(sistema.id, cantidad);
+        setConfirmacion(null);
+      }
+    });
+  };
 
   return (
     <div className={styles.panel}>
@@ -65,7 +120,7 @@ function SystemPanel({ sistema, onCerrar, nickname, onConstruir, onMoverFlotas }
       </div>
 
       <div className={styles.seccion}>
-        <h4 className={styles.seccionTitulo}>Producción por ciclo</h4>
+        <h4 className={styles.seccionTitulo}>Produccion por ciclo</h4>
         <div className={styles.produccion}>
           <div className={styles.recurso}>
             <Mountain size={13} className={styles.iconoMineral} />
@@ -112,16 +167,11 @@ function SystemPanel({ sistema, onCerrar, nickname, onConstruir, onMoverFlotas }
         <div className={styles.seccion}>
           <h4 className={styles.seccionTitulo}>Construir</h4>
           <div className={styles.botonesAccion}>
-            {[
-              { tipo: 'mina',      label: 'Mina',      costo: '100 min',              icono: <Mountain size={13} /> },
-              { tipo: 'central',   label: 'Central',   costo: '80m+50e+200c',         icono: <FlaskConical size={13} /> },
-              { tipo: 'astillero', label: 'Astillero', costo: '150m+100e+10c',        icono: <Rocket size={13} /> },
-              { tipo: 'fortaleza', label: 'Fortaleza', costo: '200m+100e+30c',        icono: <Shield size={13} /> },
-            ].map(item => (
+            {INSTALACIONES.map(item => (
               <button
                 key={item.tipo}
                 className={styles.btnConstruir}
-                onClick={() => onConstruir && onConstruir(sistema.id, item.tipo)}
+                onClick={() => pedirConfirmacionConstruir(item)}
               >
                 {item.icono}
                 <div className={styles.btnInfo}>
@@ -139,26 +189,23 @@ function SystemPanel({ sistema, onCerrar, nickname, onConstruir, onMoverFlotas }
           <h4 className={styles.seccionTitulo}>Mover flotas</h4>
           <div className={styles.moverFlotas}>
             <input
+              ref={inputFlotasRef}
               className={styles.inputFlotas}
               type="number"
               min={1}
               max={sistema.flotas}
               defaultValue={1}
-              id="cantidadFlotas"
             />
             <button
               className={styles.btnMover}
-              onClick={() => {
-                const cantidad = parseInt(document.getElementById('cantidadFlotas').value);
-                onMoverFlotas && onMoverFlotas(sistema.id, cantidad);
-              }}
+              onClick={pedirConfirmacionMover}
             >
               <Rocket size={14} />
               Enviar flotas
             </button>
           </div>
           <p className={styles.infoMuted}>
-            Hacé clic en el sistema destino después de enviar.
+            Selecciona el sistema destino en el mapa despues de confirmar.
           </p>
         </div>
       )}
@@ -167,9 +214,58 @@ function SystemPanel({ sistema, onCerrar, nickname, onConstruir, onMoverFlotas }
         <div className={styles.seccion}>
           <p className={styles.infoMuted}>
             {esLibre
-              ? 'Enviá flotas para tomar control de este sistema.'
-              : 'Enviá flotas para conquistar este sistema enemigo.'}
+              ? 'Envia flotas para tomar control de este sistema.'
+              : 'Envia flotas para conquistar este sistema enemigo.'}
           </p>
+        </div>
+      )}
+
+      {/* Modal de confirmacion */}
+      {confirmacion && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <h4 className={styles.modalTitulo}>{confirmacion.titulo}</h4>
+            <p className={styles.modalDescripcion}>{confirmacion.descripcion}</p>
+
+            {/* Detalle del costo para construcciones */}
+            {confirmacion.detalleCosto && (
+              <div className={styles.modalCosto}>
+                {confirmacion.detalleCosto.minerales > 0 && (
+                  <span className={styles.costoItem}>
+                    <Mountain size={12} className={styles.iconoMineral} />
+                    {confirmacion.detalleCosto.minerales}
+                  </span>
+                )}
+                {confirmacion.detalleCosto.energia > 0 && (
+                  <span className={styles.costoItem}>
+                    <Zap size={12} className={styles.iconoEnergia} />
+                    {confirmacion.detalleCosto.energia}
+                  </span>
+                )}
+                {confirmacion.detalleCosto.cristales > 0 && (
+                  <span className={styles.costoItem}>
+                    <FlaskConical size={12} className={styles.iconoCristal} />
+                    {confirmacion.detalleCosto.cristales}
+                  </span>
+                )}
+              </div>
+            )}
+
+            <div className={styles.modalBotones}>
+              <button
+                className={styles.btnCancelarModal}
+                onClick={() => setConfirmacion(null)}
+              >
+                Cancelar
+              </button>
+              <button
+                className={styles.btnConfirmar}
+                onClick={confirmacion.onConfirmar}
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

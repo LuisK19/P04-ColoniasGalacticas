@@ -7,6 +7,7 @@
   gap: 0rem;
   overflow-y: auto;
   flex-shrink: 0;
+  position: relative;
 }
 
 .header {
@@ -168,6 +169,7 @@
   color: var(--text);
   transition: border-color 0.2s, background 0.2s;
   text-align: left;
+  cursor: pointer;
 }
 
 .btnConstruir:hover {
@@ -217,6 +219,7 @@
   color: var(--accent);
   font-size: 0.875rem;
   padding: 0.5rem;
+  cursor: pointer;
   transition: background 0.2s;
 }
 
@@ -228,4 +231,97 @@
   font-size: 0.75rem;
   color: var(--text-muted);
   line-height: 1.5;
+}
+
+/* Modal de confirmacion */
+.modalOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 10, 20, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  z-index: 20;
+}
+
+.modal {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  width: 100%;
+  box-shadow: var(--shadow);
+}
+
+.modalTitulo {
+  font-size: 1rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.modalDescripcion {
+  font-size: 0.8375rem;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+/* Detalle del costo en construcciones */
+.modalCosto {
+  display: flex;
+  gap: 0.875rem;
+  padding: 0.625rem 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.costoItem {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8125rem;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.modalBotones {
+  display: flex;
+  gap: 0.625rem;
+  justify-content: flex-end;
+}
+
+.btnCancelarModal {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: var(--radius);
+  padding: 0.45rem 1rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.btnCancelarModal:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.btnConfirmar {
+  background: rgba(29, 111, 164, 0.12);
+  border: 1px solid var(--primary);
+  color: var(--primary);
+  border-radius: var(--radius);
+  padding: 0.45rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btnConfirmar:hover {
+  background: rgba(29, 111, 164, 0.22);
 }
