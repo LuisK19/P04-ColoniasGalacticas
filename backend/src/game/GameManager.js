@@ -394,52 +394,6 @@ class GameManager {
     }
   }
 
-  /**
- * Marca a un jugador como eliminado por abandono voluntario durante
- * una partida activa. Libera sus sistemas (quedan sin propietario)
- * y verifica si esto determina el fin de la partida.
- * @param {string} partidaId
- * @param {string} nickname
- * @returns {Object} - { ok, error, partidaFinalizada, resultadoFinal }
- */
-  salirDeJuego(partidaId, nickname) {
-    const partida = this.partidas[partidaId];
-
-    if (!partida)
-      return { ok: false, error: 'Partida no encontrada' };
-    if (partida.estado !== 'activa')
-      return { ok: false, error: 'La partida no está activa' };
-    if (!partida.jugadores[nickname])
-      return { ok: false, error: 'El jugador no está en esta partida' };
-
-    // Liberar los sistemas que controlaba, igual que una derrota total
-    for (const sistema of Object.values(partida.sistemas)) {
-      if (sistema.propietario === nickname) {
-        sistema.propietario = null;
-        sistema.estado = 'no_explorado';
-        sistema.flotas = 0;
-      }
-    }
-
-    partida.jugadores[nickname].eliminado = true;
-    console.log(`${nickname} abandonó la partida ${partida.nombre}`);
-
-    // Verificar si con esta salida la partida debe terminar
-    const jugadoresActivos = Object.values(partida.jugadores).filter(j => !j.eliminado);
-
-    if (jugadoresActivos.length <= 1) {
-      const ranking = this._calcularRanking(partida);
-      this._finalizarPartida(partida, 'ultimo_jugador', () => { });
-      return {
-        ok: true,
-        partidaFinalizada: true,
-        resultadoFinal: { partida: this._estadoJuegoCompleto(partida), ranking, motivo: 'ultimo_jugador' }
-      };
-    }
-
-    return { ok: true, partidaFinalizada: false };
-  }
-
   _verificarVictoria(partida, onFin) {
     const totalSistemas = Object.keys(partida.sistemas).length;
     const jugadoresActivos = Object.values(partida.jugadores).filter(j => !j.eliminado);
@@ -613,7 +567,9 @@ class GameManager {
       jugadores: partida.jugadores,
       galaxiaNombre: partida.galaxiaNombre,
       minJugadores: partida.minJugadores,
-      host: partida.host
+      host: partida.host,
+      tiempoMaximoSeg: partida.tiempoMaximo * 60,
+      porcentajeVictoria: config.juego.porcentajeVictoria
     };
   }
 }
