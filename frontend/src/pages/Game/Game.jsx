@@ -22,6 +22,9 @@ function Game() {
   const [flotaPendiente, setFlotaPendiente] = useState(null);
   const [notificacion, setNotificacion] = useState(null);
 
+  // Segundos restantes de la partida, calculados localmente con un intervalo
+  const [tiempoRestanteSeg, setTiempoRestanteSeg] = useState(null);
+
   // Refs para mantener valores actuales accesibles dentro del useEffect
   // de sockets sin que cambien sus dependencias y disparen reconexiones.
   const nicknameRef = useRef(nickname);
@@ -30,7 +33,7 @@ function Game() {
   navigateRef.current = navigate;
 
   /*
-   * Muestra una notificación temporal en pantalla.
+   * Muestra una notificacion temporal en pantalla.
    * Entrada: mensaje - texto a mostrar
    * Entrada: tipo - exito | error
    */
@@ -39,16 +42,43 @@ function Game() {
     setTimeout(() => setNotificacion(null), 3000);
   }, []);
 
+  // Carga el estado inicial guardado por el Lobby al navegar a esta pantalla
   useEffect(() => {
     const guardado = localStorage.getItem('estadoJuego');
     if (guardado) {
-      setEstadoJuego(JSON.parse(guardado));
+      const estado = JSON.parse(guardado);
+      setEstadoJuego(estado);
+
+      // Inicializar el tiempo restante si el backend lo envia
+      if (estado.tiempoMaximoSeg) {
+        setTiempoRestanteSeg(estado.tiempoMaximoSeg);
+      }
     }
   }, []);
 
+  /*
+   * Contador regresivo del tiempo de partida.
+   * Descuenta un segundo por intervalo mientras quede tiempo.
+   * Se detiene al llegar a cero (el backend emite game:end en ese momento).
+   */
+  useEffect(() => {
+    if (tiempoRestanteSeg == null) return;
+
+    const intervalo = setInterval(() => {
+      setTiempoRestanteSeg(prev => {
+        if (prev <= 1) {
+          clearInterval(intervalo);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(intervalo);
+  }, [tiempoRestanteSeg == null]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Conecta el socket y registra todos los eventos del juego.
-  // Solo depende de gameId: no se desconecta ni reconecta por cambios
-  // en nickname o en la referencia de funciones como navigate.
+  // Solo depende de gameId para no disparar reconexiones innecesarias.
   useEffect(() => {
     socket.connect();
     socket.emit('join-lobby', { partidaId: gameId, nickname: nicknameRef.current });
@@ -148,7 +178,7 @@ function Game() {
   }, []);
 
   /*
-   * Envía al servidor la orden de construir una instalación.
+   * Envia al servidor la orden de construir una instalacion.
    * Entrada: sistemaId - id del sistema donde construir
    * Entrada: tipo - mina | central | astillero | fortaleza
    */
@@ -157,19 +187,19 @@ function Game() {
   }, [gameId, nickname]);
 
   /*
-   * Activa el modo selección de destino para mover flotas desde
-   * el sistema dado. El próximo clic en el mapa se interpreta como destino.
+   * Activa el modo seleccion de destino para mover flotas desde
+   * el sistema dado. El proximo clic en el mapa se interpreta como destino.
    * Entrada: sistemaId - sistema origen
    * Entrada: cantidad - cantidad de flotas a mover
    */
   const handleMoverFlotas = useCallback((sistemaId, cantidad) => {
     setFlotaPendiente({ origenId: sistemaId, cantidad });
     setSistemaSeleccionado(null);
-    mostrarNotificacion('Seleccioná el sistema destino en el mapa', 'exito');
+    mostrarNotificacion('Selecciona el sistema destino en el mapa', 'exito');
   }, [mostrarNotificacion]);
 
   /*
-   * Cancela el modo selección de destino para mover flotas.
+   * Cancela el modo seleccion de destino para mover flotas.
    */
   const handleCancelarFlota = useCallback(() => {
     setFlotaPendiente(null);
@@ -177,10 +207,10 @@ function Game() {
 
   /*
    * Abandona la partida voluntariamente. El jugador se marca como
-   * eliminado en el backend (pierde sus sistemas) y se le regresa al inicio.
+   * eliminado en el backend y se le regresa al inicio.
    */
   const handleSalir = useCallback(() => {
-    const confirmado = window.confirm('¿Seguro que querés abandonar la partida? Perderás todos tus sistemas.');
+    const confirmado = window.confirm('Seguro que queres abandonar la partida? Perderas todos tus sistemas.');
     if (!confirmado) return;
 
     socket.emit('game:leave', { partidaId: gameId, nickname });
@@ -191,7 +221,7 @@ function Game() {
   /*
    * Maneja el clic en un sistema del mapa. Si hay una orden de mover
    * flotas pendiente, completa el movimiento hacia el sistema clickeado.
-   * Si no, simplemente selecciona el sistema para ver su información.
+   * Si no, simplemente selecciona el sistema para ver su informacion.
    */
   const handleClickMapa = useCallback((sistema) => {
     if (flotaPendiente) {
@@ -212,8 +242,11 @@ function Game() {
     handleClickSistema(sistema);
   }, [flotaPendiente, gameId, nickname, handleClickSistema]);
 
+  // Estabiliza la adyacencia para que GalaxyMap no redibuje el grafo
+  // en cada tick aunque la estructura no haya cambiado realmente.
   const adyacenciaEstable = useMemo(
     () => estadoJuego?.adyacencia,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [JSON.stringify(estadoJuego?.adyacencia)]
   );
 
@@ -226,20 +259,26 @@ function Game() {
   }
 
   const jugadorActual = estadoJuego.jugadores?.[nickname] || {};
+  const totalSistemas = Object.keys(estadoJuego.sistemas || {}).length;
+
+  // Cantidad de sistemas que controla el jugador actual
+  const sistemasJugador = Object.values(estadoJuego.sistemas || {})
+    .filter(s => s.propietario === nickname).length;
 
   return (
     <div className={styles.container}>
-      <div className={styles.topBar}>
-        <ResourceBar
-          minerales={jugadorActual.minerales ?? 0}
-          energia={jugadorActual.energia ?? 0}
-          cristales={jugadorActual.cristales ?? 0}
-          nickname={nickname}
-        />
-        <button className={styles.btnSalir} onClick={handleSalir}>
-          Salir
-        </button>
-      </div>
+
+      <ResourceBar
+        minerales={jugadorActual.minerales ?? 0}
+        energia={jugadorActual.energia ?? 0}
+        cristales={jugadorActual.cristales ?? 0}
+        nickname={nickname}
+        tiempoRestanteSeg={tiempoRestanteSeg}
+        sistemasJugador={sistemasJugador}
+        totalSistemas={totalSistemas}
+        porcentajeVictoria={estadoJuego.porcentajeVictoria ?? 70}
+        onSalir={handleSalir}
+      />
 
       {notificacion && (
         <div className={`${styles.notificacion} ${styles['notificacion' + (notificacion.tipo === 'error' ? 'Error' : 'Exito')]}`}>
@@ -249,7 +288,7 @@ function Game() {
 
       {flotaPendiente && (
         <div className={styles.avisoFlota}>
-          Elegí el sistema destino en el mapa para enviar {flotaPendiente.cantidad} flotas.
+          Elegi el sistema destino en el mapa para enviar {flotaPendiente.cantidad} flotas.
           <button className={styles.btnCancelarFlota} onClick={handleCancelarFlota}>
             Cancelar
           </button>
@@ -276,6 +315,7 @@ function Game() {
           />
         )}
       </div>
+
     </div>
   );
 }
